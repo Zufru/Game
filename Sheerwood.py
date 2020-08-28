@@ -54,6 +54,7 @@ walkLeft = [
     pygame.image.load('Sprites/player/knight iso char_run left_4.png'),
     pygame.image.load('Sprites/player/knight iso char_run left_5.png')
     ]
+g_over = pygame.image.load("Sprites/gameover.png")
 # BACKGROUND IMAGE
 bg = pygame.image.load('Sprites/backgrounds/sky_fc.png')
 clouds = [
@@ -157,10 +158,7 @@ class Player():
         i = 0
         while i < 1000:
             i += 1
-            
 
-        
-            
     def healthgfx(self, healthnum):
         if self.health == 10:
             return window.blit(health_gfx[0] ,(0, 0))
@@ -258,8 +256,10 @@ class Enemy():
             self.hitbox = (self.x + 20, self.y, 28, 60)
             #pygame.draw.rect(window, (255, 0, 0), self.hitbox, 2)
             # MAKING HEALTHBAR FIRST IS RED SECONDS GREEN
-            pygame.draw.rect(window, (255,0,0), (self.hitbox[0], self.hitbox[1] - 20, 50, 10))
-            pygame.draw.rect(window, (0,255,0), (self.hitbox[0], self.hitbox[1] - 20, 50 - (5 * (10 - self.health)), 10))
+            pygame.draw.rect(window, (255,0,0), (self.hitbox[0],
+            self.hitbox[1] - 20, 50, 10))
+            pygame.draw.rect(window, (0,255,0), (self.hitbox[0],
+            self.hitbox[1]- 20, 50 - (5 * (10 - self.health)), 10))
             
     def hit(self):
         if self.health > 0:
@@ -295,12 +295,13 @@ class Hell_beast():
         self.hitbox = (self.x, self.y, 28, 60)
         self.idle_movement = 0
         self.breath_timer = 0
+        
+
             
     def draw(self, window):
         if self.health > 0:
             if self.idle_movement + 1 >= 36:
                 self.idle_movement = 0
-                self.breath_timer += 1
             self.idle_movement +=1
             if self.idle_movement > 0:
                 window.blit(hell_beast[self.idle_movement//6], (self.x, self.y))
@@ -308,11 +309,25 @@ class Hell_beast():
     
     def draw_breath(self, window):
         if self.health > 0:
-            self.breath_timer += 1
-            if self.breath_timer > 80:
+            if self.breath_timer + 1 > 100:
                 self.breath_timer = 0
-            if self.breath_timer >= 10 and self.breath_timer < 40:
-                window.blit(hell_beast_breath[self.breath_timer//10], (hell_beast1.x, hell_beast1.y))
+            if self.breath_timer > 10 and self.breath_timer < 40:
+                window.blit(hell_beast_breath[self.breath_timer//10],
+                            (hell_beast1.x, hell_beast1.y))
+                self.breath_timer += 1
+            else:
+                hell_beast1.draw(window)
+                self.breath_timer += 1
+        print(self.breath_timer)
+    # def draw_breath(self, window):
+    #     if self.health > 0:
+    #         self.breath_timer += 1
+    #         if self.breath_timer + 1 > 100:
+    #             self.breath_timer = 0
+    #         if self.breath_timer > 10 and self.breath_timer < 40:
+    #             window.blit(hell_beast_breath[self.breath_timer//10],
+    #                         (hell_beast1.x, hell_beast1.y))
+    #     print(self.breath_timer)
             
 
         #     if self.idle_movement == 0:
@@ -366,6 +381,8 @@ def redraw_level1():
         bullet.draw(window)
     # UPDATE THE SCREEN FOR THE MOVEMENT
     player.healthgfx(player.health)
+    if player.health <= 0:
+        window.blit(g_over, (0,0))
     pygame.display.update()
 
 def redraw_level2():
@@ -376,7 +393,7 @@ def redraw_level2():
         text = font.render(f'Score: {score}', 1, (0,0,0))
         window.blit(text, (650, 10))
         hell_beast1.draw(window)
-        if hell_beast1.health > 0 and hell_beast1.breath_timer > 10 and hell_beast1.breath_timer < 40:
+        if hell_beast1.health > 0 and hell_beast1.breath_timer > 20 and hell_beast1.breath_timer < 80:
             window.blit(clouds[1], (0, 0))
             window.blit(clouds[0], (0, 0))
             hell_beast1.draw_breath(window)
@@ -384,6 +401,9 @@ def redraw_level2():
         box.draw(window)
         for bullet in bullets:
             bullet.draw(window)
+        if player.health <= 0:
+            window.blit(g_over, (0,0))
+        hell_beast1.breath_timer += 1
         pygame.display.update()
 
 shootloop = 0
@@ -397,6 +417,8 @@ while run:
     clock.tick(60)
     player.moving_level()
     
+    if hell_beast1.breath_timer == 0 and hell_beast1.health > 0:
+        hell_beast1.draw_breath(window)
     #if (player.hitbox[1] < box.collisionbox[1] + box.collisionbox[3]
    #     and player.hitbox[1] + player.hitbox[3] > box.collisionbox[1]):
   #      if (player.hitbox[0] + player.hitbox[2] > box.collisionbox [0]
@@ -454,12 +476,12 @@ while run:
         
         shoot_timing = 1
     # MOVING THE PLAYER LEFT AND RIGHT
-    if keys[pygame.K_a] and player.x > 1:
+    if keys[pygame.K_a] and player.x > 1 and player.health >= 1:
         player.x -= player.vel
         player.left = True
         player.right = False
         player.standing = False
-    elif keys[pygame.K_d]:
+    elif keys[pygame.K_d] and player.health >= 1:
         player.x += player.vel
         player.right = True
         player.left = False
@@ -473,7 +495,7 @@ while run:
         #    y -= vel
         #if keys[pygame.K_DOWN] and y < 1000 - height - vel:
         #    y += vel
-        if keys[pygame.K_UP]:
+        if keys[pygame.K_UP] and player.health >= 1:
             player.isJump = True
             player.right = False
             player.left = False
@@ -494,6 +516,5 @@ while run:
         redraw_level1()
     if player.level == 1:
         redraw_level2()
-        hell_beast1.breath_timer += 1
-        
+
 pygame.quit()
