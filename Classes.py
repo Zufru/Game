@@ -6,7 +6,7 @@ Created on Mon Aug 31 15:26:01 2020
 """
 
 import pygame
-from utils import *
+from utsils import *
 clockfps = 60
 current_iomage = 0
 time = 0
